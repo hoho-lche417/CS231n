@@ -1,0 +1,1 @@
+The repo holds the [assignments](https://cs231n.stanford.edu/2025/assignments.html) and projects for the free online course [CS231n: Deep Learning for Computer Vision](https://cs231n.stanford.edu/2025/index.html). 
