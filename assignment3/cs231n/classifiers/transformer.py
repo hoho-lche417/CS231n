@@ -88,7 +88,16 @@ class CaptioningTransformer(nn.Module):
         #  3) Finally, apply the decoder features on the text & image embeddings   #
         #     along with the tgt_mask. Project the output to scores per token      #
         ############################################################################
+        memory = self.visual_projection(features).unsqueeze(1)  # (N, 1, wordvec_dim)
 
+        captions_embed = self.embedding(captions)  # (N, T, wordvec_dim)
+        captions_embed = self.positional_encoding(captions_embed)  # (N, T, wordvec_dim)
+
+        tgt_mask = torch.tril(torch.ones(T, T, device=features.device, dtype=torch.bool), diagonal=0)
+
+        decoder_out = self.transformer(tgt=captions_embed, memory=memory, tgt_mask=tgt_mask)  # (N, T, wordvec_dim)
+
+        scores = self.output(decoder_out)  # (N, T, vocab_size)
         ############################################################################
         #                             END OF YOUR CODE                             #
         ############################################################################
@@ -151,9 +160,10 @@ class TransformerDecoder(nn.Module):
     def forward(self, tgt, memory, tgt_mask=None):
         output = tgt
 
+        #print(len(self.layers))
         for mod in self.layers:
             output = mod(output, memory, tgt_mask=tgt_mask)
-
+            #print(output)
         return output
 
 
@@ -240,7 +250,20 @@ class VisionTransformer(nn.Module):
         #    You may find torch.mean useful.                                      #
         # 5. Feed it through a linear layer to produce class logits.              #
         ############################################################################
+        # 1
+        x = self.patch_embed(x)
 
+        # 2
+        x = self.positional_encoding(x)
+
+        # 3
+        x = self.transformer(x)
+
+        # 4
+        x = torch.mean(x, dim=1)
+
+        # 5
+        logits = self.head(x)        
         ############################################################################
         #                             END OF YOUR CODE                             #
         ############################################################################
